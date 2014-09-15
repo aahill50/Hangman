@@ -1,7 +1,7 @@
 class Hangman
 	MAX_TURNS = 8
 
-	attr_accessor :current_turn, :reveal_string
+	attr_accessor :current_turn, :reveal_string, :secret_word_length
 	attr_reader :checker, :guesser, :guessed_letters
 
 	def initialize(checker, guesser)
@@ -10,13 +10,14 @@ class Hangman
 		@reveal_string = "_"
 		@current_turn = 1
 		@guessed_letters = []
+		@secret_word_length = 0
 	end
 
 	def run
 		game_start
 		
 		until over?
-			guessed_letter = guesser.get_guess(self.guessed_letters)
+			guessed_letter = guesser.get_guess(self.guessed_letters, secret_word_length)
 			guessed_indices = checker.check_guess(guessed_letter, self.guessed_letters)
 			self.guessed_letters << guessed_letter
 			self.current_turn += 1 unless guessed_indices.length > 0
@@ -30,7 +31,7 @@ class Hangman
 
 	def game_start
 		checker.pick_secret_word
-		secret_word_length = checker.secret_word_length
+		self.secret_word_length = checker.secret_word_length
 		puts "#{secret_word_length} letters"
 		puts
 		self.reveal_string = "_" * secret_word_length
@@ -62,10 +63,11 @@ class ComputerPlayer
 
 	DICTIONARY = File.readlines("dictionary.txt").map(&:chomp)
 
-	attr_accessor :name, :secret_word_length, :secret_word
+	attr_accessor :name, :secret_word_length, :secret_word, :possible_guesses
 
 	def initialize(name = "Hangmanbot")
 		@name = name
+		@possible_guesses = DICTIONARY.dup
 	end
 
 	def pick_secret_word
@@ -75,17 +77,22 @@ class ComputerPlayer
 		puts "Secret word has been chosen."
 	end
 
-	def get_guess(guessed_letters)
+	def get_guess(guessed_letters, secret_word_length)
 		guess = ''
+		self.possible_guesses = self.possible_guesses.select {|word| word.length ==  secret_word_length}	
+
 		good_guess = false
 
 		until good_guess
-			guess = ('a'..'z').to_a.sample
+			word_from_dict = possible_guesses.sample
+			guess = word_from_dict.split(//).sample.to_s
 			good_guess = true unless guessed_letters.include?(guess)
 		end
 
 		guess 
 	end
+
+
 
 	def check_guess(guess, guessed_letters)
 		guessed_indices = []
@@ -128,7 +135,7 @@ class HumanPlayer
 		self.secret_word_length = word_len
 	end
 
-	def get_guess(guessed_letters)
+	def get_guess(guessed_letters, secret_word_length)
 		puts "Already guessed: #{guessed_letters.sort.inspect}"
 
 		print "Guess a letter: "
@@ -165,9 +172,9 @@ class HumanPlayer
 
 	def get_guess_indices(guess)
 		puts "Where in your word does #{guess} occur?"
-		puts "Enter comma separated numbers e.g. 1,4,7"
+		puts "Enter comma separated numbers e.g. 1,4,7 (Start at index 1)"
 		input = gets.chomp
-		input.split(',').map(&:to_i)
+		input.split(',').map{|num| num.to_i - 1}
 	end
 end
 
