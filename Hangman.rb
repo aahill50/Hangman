@@ -80,16 +80,30 @@ class ComputerPlayer
 	def get_guess(guessed_letters, secret_word_length)
 		guess = ''
 		self.possible_guesses = self.possible_guesses.select {|word| word.length ==  secret_word_length}	
+		letter_freq = Hash.new(0)
 
-		good_guess = false
-
-		until good_guess
-			word_from_dict = possible_guesses.sample
-			guess = word_from_dict.split(//).sample.to_s
-			good_guess = true unless guessed_letters.include?(guess)
+		self.possible_guesses.each do |word|
+			word.split(//).each do |letter|
+				letter_freq[letter] += 1
+			end
 		end
 
-		guess 
+		letter_freq.delete_if {|key, value| guessed_letters.include?(key)}
+		letter_freq = letter_freq.to_a
+
+		letter_freq_sorted = letter_freq.sort {|char1, char2| char2[1] <=> char1[1]}
+		most_freq_letter = letter_freq_sorted.first
+		most_freq_letter[0]
+
+		# good_guess = false
+
+		# until good_guess
+		# 	word_from_dict = possible_guesses.sample
+		# 	guess = word_from_dict.split(//).sample.to_s
+		# 	good_guess = true unless guessed_letters.include?(guess)
+		# end
+
+		# guess 
 	end
 
 
