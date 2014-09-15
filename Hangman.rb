@@ -17,7 +17,7 @@ class Hangman
 		game_start
 		
 		until over?
-			guessed_letter = guesser.get_guess(self.guessed_letters, secret_word_length)
+			guessed_letter = guesser.get_guess(self.guessed_letters, secret_word_length, self.reveal_string)
 			guessed_indices = checker.check_guess(guessed_letter, self.guessed_letters)
 			self.guessed_letters << guessed_letter
 			self.current_turn += 1 unless guessed_indices.length > 0
@@ -77,12 +77,26 @@ class ComputerPlayer
 		puts "Secret word has been chosen."
 	end
 
-	def get_guess(guessed_letters, secret_word_length)
-		guess = ''
-		self.possible_guesses = self.possible_guesses.select {|word| word.length ==  secret_word_length}	
+	def get_guess(guessed_letters, secret_word_length, reveal_string)
+		pg = self.possible_guesses
+
+		pg = pg.select {|word| word.length == secret_word_length }
+				
+		new_poss_guesses = pg.dup
+
+		pg.select do |word|
+			word.split(//).each_with_index do |char, index|
+				if reveal_string[index] != char && reveal_string[index] != '_'
+					new_poss_guesses.delete(word)
+				end
+			end
+		end
+
+		pg = new_poss_guesses
+
 		letter_freq = Hash.new(0)
 
-		self.possible_guesses.each do |word|
+		pg.each do |word|
 			word.split(//).each do |letter|
 				letter_freq[letter] += 1
 			end
@@ -94,16 +108,6 @@ class ComputerPlayer
 		letter_freq_sorted = letter_freq.sort {|char1, char2| char2[1] <=> char1[1]}
 		most_freq_letter = letter_freq_sorted.first
 		most_freq_letter[0]
-
-		# good_guess = false
-
-		# until good_guess
-		# 	word_from_dict = possible_guesses.sample
-		# 	guess = word_from_dict.split(//).sample.to_s
-		# 	good_guess = true unless guessed_letters.include?(guess)
-		# end
-
-		# guess 
 	end
 
 
@@ -149,7 +153,7 @@ class HumanPlayer
 		self.secret_word_length = word_len
 	end
 
-	def get_guess(guessed_letters, secret_word_length)
+	def get_guess(guessed_letters, secret_word_length, reveal_string)
 		puts "Already guessed: #{guessed_letters.sort.inspect}"
 
 		print "Guess a letter: "
