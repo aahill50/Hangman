@@ -15,7 +15,7 @@ class Hangman
 
 	def run
 		game_start
-		
+
 		until over?
 			guessed_letter = guesser.get_guess(self.guessed_letters, secret_word_length, self.reveal_string)
 			guessed_indices = checker.check_guess(guessed_letter, self.guessed_letters)
@@ -81,7 +81,7 @@ class ComputerPlayer
 		pg = self.possible_guesses
 
 		pg = pg.select {|word| word.length == secret_word_length }
-				
+
 		new_poss_guesses = pg.dup
 
 		pg.select do |word|
@@ -157,7 +157,15 @@ class HumanPlayer
 		puts "Already guessed: #{guessed_letters.sort.inspect}"
 
 		print "Guess a letter: "
-		guess = gets.chomp
+    begin
+		  guess = gets.chomp
+      raise IllegalArgumentError if ('a'..'z').none? {|letter| letter == guess}
+    rescue IllegalArgumentError
+      puts "Try Again"
+      retry
+    end
+
+    guess
 	end
 
 	def check_guess(guess, guessed_letters)
@@ -194,6 +202,9 @@ class HumanPlayer
 		input = gets.chomp
 		input.split(',').map{|num| num.to_i - 1}
 	end
+end
+
+class IllegalArgumentError < StandardError
 end
 
 p1 = ComputerPlayer.new
